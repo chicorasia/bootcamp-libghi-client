@@ -68,6 +68,7 @@
 
 
         <RatingBar
+            android:id="@+id/card_ratingbar"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:stepSize="1"
@@ -79,4 +80,4 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-</androidx.cardview.widget.CardView><?xml version="1.0" encoding="utf-8"?>
+</androidx.cardview.widget.CardView>
