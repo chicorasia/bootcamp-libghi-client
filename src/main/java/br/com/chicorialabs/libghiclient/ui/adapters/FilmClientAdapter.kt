@@ -1,15 +1,11 @@
 package br.com.chicorialabs.libghiclient.ui.activity
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
-import android.net.Uri
-import android.provider.BaseColumns
 import android.provider.BaseColumns._ID
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import br.com.chicorialabs.libghiclient.constants.Constants.Companion.DIRECTOR
 import br.com.chicorialabs.libghiclient.constants.Constants.Companion.IS_WATCHED
@@ -22,13 +18,8 @@ import br.com.chicorialabs.libghiclient.databinding.ListaFilmeItemBinding
 class FilmClientAdapter(
     val context: Context,
     private val listener: FilmClickedListener,
-    private var mCursor: Cursor? = null
+    private var mCursor: Cursor
 ) : RecyclerView.Adapter<FilmClientViewHolder>() {
-
-    fun setCursor(newCursor: Cursor?) {
-        mCursor = newCursor
-        notifyDataSetChanged()
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FilmClientViewHolder {
         val binding = ListaFilmeItemBinding.inflate(
@@ -39,25 +30,25 @@ class FilmClientAdapter(
     }
 
     override fun onBindViewHolder(holder: FilmClientViewHolder, position: Int) {
-        //mover o cursor até a posição
         mCursor?.let {
             it.moveToPosition(position)
             holder.bind(it)
-            Log.i("lib_ghirecycl", "onBindViewHolder: ${holder.filmTitleTv.text}")
+            Log.i("lib_ghi", "onBindViewHolder: ${holder.filmTitleTv.text}, " +
+                    "position $position, cursor ${it.position}")
         }
 
         holder.filmIsWatchedCb.setOnCheckedChangeListener { _, isChecked ->
-            listener.filmCheckBoxClickedListener(mCursor, isChecked)
+            listener.filmCheckBoxClickedListener(mCursor, isChecked, holder.id)
         }
 
-        holder.filmRatingBar.setOnRatingBarChangeListener { ratingBar, rating, fromUser ->
-            listener.filmRatingChangedListener(mCursor, rating)
+        holder.filmRatingBar.setOnRatingBarChangeListener { _, rating, _ ->
+            listener.filmRatingChangedListener(mCursor, rating, holder.id)
         }
 
     }
 
     override fun getItemCount(): Int {
-        return mCursor?.count ?: 0
+        return mCursor.count
     }
 
 }
@@ -70,9 +61,11 @@ class FilmClientViewHolder(binding: ListaFilmeItemBinding) : RecyclerView.ViewHo
     val filmYearTv = binding.cardFilmYear
     val filmIsWatchedCb = binding.cardIswatchedCb
     val filmRatingBar = binding.cardRatingbar
+    var id: Long = 0
 
     fun bind(cursor: Cursor) {
         cursor.let {
+            id = it.getLong(it.getColumnIndex(_ID))
             filmTitleTv.text = it.getString(it.getColumnIndex(TITLE))
             filmOriginalTitleTv.text = it.getString(it.getColumnIndex(ORIGINAL_TITLE))
             filmDirectorTv.text = it.getString(it.getColumnIndex(DIRECTOR))
@@ -82,18 +75,14 @@ class FilmClientViewHolder(binding: ListaFilmeItemBinding) : RecyclerView.ViewHo
             }
             filmRatingBar.rating = it.getInt(it.getColumnIndex(RATING)).toFloat()
         }
-
-
     }
-
-
 }
 
 interface FilmClickedListener {
 
-    fun filmCheckBoxClickedListener(cursor: Cursor?, isChecked: Boolean)
+    fun filmCheckBoxClickedListener(cursor: Cursor?, isChecked: Boolean, position: Long)
 
-    fun filmRatingChangedListener(cursor: Cursor?, rating: Float)
+    fun filmRatingChangedListener(cursor: Cursor?, rating: Float, position: Long)
 
 }
 
