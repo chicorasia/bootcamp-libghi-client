@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.provider.BaseColumns
 import android.provider.BaseColumns._ID
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
@@ -20,7 +21,7 @@ import br.com.chicorialabs.libghiclient.databinding.ListaFilmeItemBinding
 
 class FilmClientAdapter(
     val context: Context,
-    private val filmClickedListener: FilmClickedListener,
+    private val listener: FilmClickedListener,
     private var mCursor: Cursor? = null
 ) : RecyclerView.Adapter<FilmClientViewHolder>() {
 
@@ -42,26 +43,15 @@ class FilmClientAdapter(
         mCursor?.let {
             it.moveToPosition(position)
             holder.bind(it)
+            Log.i("lib_ghirecycl", "onBindViewHolder: ${holder.filmTitleTv.text}")
         }
 
         holder.filmIsWatchedCb.setOnCheckedChangeListener { _, isChecked ->
-            Toast.makeText(context, "Clicou em ${holder.filmTitleTv.text}!", Toast.LENGTH_LONG).show()
-            val url = "content://br.com.chicorialabs.libghi.provider/films"
-            val data = Uri.parse(url)
-            val values = ContentValues().apply {
-                if (isChecked) {
-                    put(IS_WATCHED, 1)
-                } else {
-                    put(IS_WATCHED, 0)
-                }
-            }
+            listener.filmCheckBoxClickedListener(mCursor, isChecked)
+        }
 
-//           context.contentResolver.update(
-//               Uri.withAppendedPath(data, mCursor?.getInt(0).toString()),
-//               values,
-//               null
-//           )
-
+        holder.filmRatingBar.setOnRatingBarChangeListener { ratingBar, rating, fromUser ->
+            listener.filmRatingChangedListener(mCursor, rating)
         }
 
     }
@@ -90,7 +80,7 @@ class FilmClientViewHolder(binding: ListaFilmeItemBinding) : RecyclerView.ViewHo
             with(filmIsWatchedCb) {
                 this.isChecked = it.getInt(it.getColumnIndex(IS_WATCHED)) == 1
             }
-            filmRatingBar.numStars = it.getInt(it.getColumnIndex(RATING))
+            filmRatingBar.rating = it.getInt(it.getColumnIndex(RATING)).toFloat()
         }
 
 
@@ -101,9 +91,9 @@ class FilmClientViewHolder(binding: ListaFilmeItemBinding) : RecyclerView.ViewHo
 
 interface FilmClickedListener {
 
-    fun filmCheckBoxClickedListener(cursor: Cursor?)
+    fun filmCheckBoxClickedListener(cursor: Cursor?, isChecked: Boolean)
 
-    fun filmRatingChangedListener(cursor: Cursor?)
+    fun filmRatingChangedListener(cursor: Cursor?, rating: Float)
 
 }
 
